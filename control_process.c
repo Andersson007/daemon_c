@@ -1,5 +1,7 @@
 #define _POSIX_C_SOURCE 1
 
+#include <sys/types.h>
+#include "headers/backend_list.h"
 #include "headers/control_process.h"
 #include "headers/general.h"
 
@@ -14,11 +16,15 @@ int control_process(void *udata) {
     sigset_t mask;
     struct signalfd_siginfo si;
 
+    // Ptr to process list
+    backend_node *backend_list = init_backend_list();
+
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
 
-    // Greeting
-    syslog(LOG_INFO, "control process started. PID: %d", getpid());
+    // Greeting, the first elem of backend list has been
+    // initialized with control process' PID
+    syslog(LOG_INFO, "control process started. PID: %d", (int)backend_list->b_pid);
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
