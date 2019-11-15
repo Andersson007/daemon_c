@@ -1,9 +1,31 @@
 #define _POSIX_C_SOURCE 1
 
+#include <glib.h>
 #include <sys/types.h>
-#include "headers/backend_list.h"
+#include "headers/backend.h"
 #include "headers/control_process.h"
 #include "headers/general.h"
+
+
+// Return struct of backend process representation
+backend_node* make_backend(pid_t b_pid, unsigned b_type) {
+    backend_node* b = g_new(backend_node, 1);
+    b->b_pid = b_pid;
+    b->b_type = b_type;
+    return b;
+}
+
+
+// Get backend process pid from backend list item
+inline pid_t get_b_pid(GList* item) {
+    return ((backend_node*)item->data)->b_pid;
+}
+
+
+// Get backend process type from backend list item
+inline int get_b_type(GList* item) {
+    return ((backend_node*)item->data)->b_type;
+}
 
 
 // Control process body
@@ -16,15 +38,18 @@ int control_process(void *udata) {
     sigset_t mask;
     struct signalfd_siginfo si;
 
-    // Ptr to process list
-    backend_node *backend_list = init_backend_list();
+    // Initialize backend list
+    GQueue* b_list = g_queue_new();
+    g_queue_push_tail(b_list, make_backend(getpid(), CONTROL_PROCESS));
+
+    GList* cnt_proc = g_queue_peek_nth_link(b_list, 0);
 
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
 
-    // Greeting, the first elem of backend list has been
-    // initialized with control process' PID
-    syslog(LOG_INFO, "control process started. PID: %d", (int)backend_list->b_pid);
+    // Greeting
+    syslog(LOG_INFO, "control proc started. PID: %d, TYPE: %d",
+           get_b_pid(cnt_proc), get_b_type(cnt_proc));
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
