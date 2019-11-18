@@ -112,6 +112,9 @@ int control_process(void *udata) {
         }
     }
 
+    // Clean up
+    g_queue_free(b_list);
+
     // Close the signal file descriptor
     close(sfd);
     // Remove the sighal handlers
