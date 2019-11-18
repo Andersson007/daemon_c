@@ -12,7 +12,7 @@ inline pid_t get_b_pid(GList* item);
 
 inline int get_b_type(GList* item);
 
-// Return struct of backend process representation
+// Return ptr to struct backend process representation
 backend_node* make_backend(pid_t b_pid, unsigned b_type) {
     backend_node* b = g_new(backend_node, 1);
     b->b_pid = b_pid;
@@ -21,11 +21,20 @@ backend_node* make_backend(pid_t b_pid, unsigned b_type) {
 }
 
 
-// Return struct for log message
+// Return ptr to struct for log message
 log_record* make_lrec(char* rec) {
     log_record* r = g_new(log_record, 1);
     r->rec = rec;
     return r;
+}
+
+
+// Return ptr to struct for logger params
+logger_params* make_logger_params(GQueue* log_queue, char* log_fpath) {
+    logger_params* p = g_new(logger_params, 1);
+    p->log_queue = log_queue;
+    p->log_fpath = log_fpath;
+    return p;
 }
 
 
@@ -44,7 +53,6 @@ inline int get_b_type(GList* item) {
 // Control process body
 int control_process(void *udata) {
 
-    int exit = 0;
     int exit_code = EXIT_SUCCESS;
 
     int sfd = -1;
@@ -59,7 +67,7 @@ int control_process(void *udata) {
 
     // Initialize log shared structure
     GQueue* log_queue = g_queue_new();
-    g_queue_push_tail(log_queue, "Control process initialized\n");
+    g_queue_push_tail(log_queue, "control process initialized\n");
 
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
@@ -68,12 +76,28 @@ int control_process(void *udata) {
     syslog(LOG_INFO, "control proc started. PID: %d, TYPE: %d",
            get_b_pid(cnt_proc), get_b_type(cnt_proc));
 
+    // Logger related actions
+    char* log_fpath = DEFAULT_LOG_PATH;
+    FILE* log_fp = fopen(log_fpath, "a+");
+    if (!log_fp) {
+        syslog(LOG_ERR, "could not open the log file %s", log_fpath);
+        exit(1);
+    }
+    else {
+/* DEBUG */
+        fprintf(log_fp, "control process 'hello'\n");
+        fflush(log_fp);
+/**/
+        fclose(log_fp);
+    }
+
+    logger_params* log_params = make_logger_params(log_queue, log_fpath);
+
     // Start Logger process
-    void* tmp = &log_queue;
-    pid_t pid = rundaemon(0,                        // Daemon creation flags
-                          logger, &tmp,             // Daemon body function and its argument
-                          &exit_code,               // Pointer to a variable to receive daemon exit code
-                          "/var/run/logger.pid");   // Path to the PID-file
+    pid_t pid = rundaemon(0,                            // Daemon creation flags
+                          logger, (void*) log_params,   // Daemon body function and its argument
+                          &exit_code,                   // Pointer to a variable to receive daemon exit code
+                          "/var/run/logger.pid");       // Path to the PID-file
 
     g_queue_push_tail(b_list, make_backend(pid, LOGGER_PROCESS));
 
@@ -100,7 +124,8 @@ int control_process(void *udata) {
     }
 
     // The control process loop
-    while (!exit) {
+    int need_exit = 0;
+    while (!need_exit) {
         int result;
         fd_set readset;
 
@@ -126,7 +151,7 @@ int control_process(void *udata) {
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
                     syslog(LOG_INFO, "Got SIGTERM signal. Stopping daemon...");
-                    exit = 1;
+                    need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
                     syslog(LOG_INFO, "Got SIGHUP signal.");
@@ -139,8 +164,9 @@ int control_process(void *udata) {
     }
 
     // Clean up
-    g_queue_free(b_list);   // Backend list
-    g_queue_free(log_queue);  // Log message queue
+    g_queue_free(b_list);       // Backend list
+    g_queue_free(log_queue);    // Log message queue
+    free(log_params);           // Log params
 
     // Close the signal file descriptor
     close(sfd);

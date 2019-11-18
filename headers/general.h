@@ -5,4 +5,6 @@
 
 #define PROGNAME "daemon"
 
+#define DEFAULT_LOG_PATH "/tmp/app.log"
+
 #endif

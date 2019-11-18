@@ -9,6 +9,11 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
+typedef struct logger_params {
+    GQueue* log_queue;
+    char* log_fpath;
+} logger_params;
+
 typedef struct log_record {
     char* rec;
 } log_record;

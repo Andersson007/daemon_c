@@ -6,9 +6,8 @@
 
 int logger(void* udata) {
 
-    GQueue* log_queue = (GQueue*) &udata;
+    logger_params* log_params = (logger_params*) udata;
 
-    int exit = 0;
     int exit_code = EXIT_SUCCESS;
 
     int sfd = -1;
@@ -22,8 +21,21 @@ int logger(void* udata) {
     syslog(LOG_INFO, "logger started. PID: %d, TYPE: %d",
            getpid(), LOGGER_PROCESS);
 
+    FILE* log_fp = fopen(log_params->log_fpath, "a+");
+    if (!log_fp) {
+        syslog(LOG_ERR, "could not open the log file %s",
+               log_params->log_fpath);
+        exit(1);
+    }
+
+/* DEBUG */
+    fprintf(log_fp, "logger 'hello'\n");
+    fflush(log_fp);
+/*
+*/
+
     // Push greeting to log queue
-    g_queue_push_tail(log_queue, "Control process initialized\n");
+    g_queue_push_tail(log_params->log_queue, "Control process initialized\n");
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -48,7 +60,8 @@ int logger(void* udata) {
     }
 
     // The control process loop
-    while (!exit) {
+    int need_exit = 0;
+    while (!need_exit) {
         int result;
         fd_set readset;
 
@@ -74,7 +87,7 @@ int logger(void* udata) {
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
                     syslog(LOG_INFO, "Got SIGTERM signal. Stopping daemon...");
-                    exit = 1;
+                    need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
                     syslog(LOG_INFO, "Got SIGHUP signal.");
@@ -87,7 +100,8 @@ int logger(void* udata) {
     }
 
     // Clean up
-    //
+    fclose(log_fp);     // Log file descriptor
+    free(log_params);   // Log params struct
 
     // Close the signal file descriptor
     close(sfd);
