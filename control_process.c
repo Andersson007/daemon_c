@@ -5,6 +5,7 @@
 #include "headers/backend.h"
 #include "headers/control_process.h"
 #include "headers/general.h"
+#include "headers/logger.h"
 
 
 // Return struct of backend process representation
@@ -13,6 +14,14 @@ backend_node* make_backend(pid_t b_pid, unsigned b_type) {
     b->b_pid = b_pid;
     b->b_type = b_type;
     return b;
+}
+
+
+// Return struct for log message
+log_record* make_lrec(char* rec) {
+    log_record* r = g_new(log_record, 1);
+    r->rec = rec;
+    return r;
 }
 
 
@@ -43,6 +52,10 @@ int control_process(void *udata) {
     g_queue_push_tail(b_list, make_backend(getpid(), CONTROL_PROCESS));
 
     GList* cnt_proc = g_queue_peek_nth_link(b_list, 0);
+
+    // Initialize log shared structure
+    GQueue* l_queue = g_queue_new();
+    g_queue_push_tail(l_queue, "Control process initialized\n");
 
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
@@ -113,7 +126,8 @@ int control_process(void *udata) {
     }
 
     // Clean up
-    g_queue_free(b_list);
+    g_queue_free(b_list);   // Backend list
+    g_queue_free(l_queue);  // Log message queue
 
     // Close the signal file descriptor
     close(sfd);
