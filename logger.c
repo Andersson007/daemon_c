@@ -133,6 +133,7 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
     // When log_queue is not empty, write its elements to log_fp,
     // and pop them from log_queue
     if (!g_queue_is_empty(log_queue)) {
+/* Debug */
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
         /*
          * Use lock here
@@ -142,6 +143,8 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
             fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
             g_queue_pop_head(log_queue);
         }
+/* Debug */
+        syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
 
         // Flush data to disk
         fflush(log_fp);
