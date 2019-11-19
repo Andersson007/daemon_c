@@ -93,13 +93,16 @@ int control_process(void *udata) {
 
     logger_params* log_params = make_logger_params(log_queue, log_fpath);
 
+    /* Logger process related tasks */ 
     // Start Logger process
     pid_t pid = rundaemon(0,                            // Daemon creation flags
                           logger, (void*) log_params,   // Daemon body function and its argument
                           &exit_code,                   // Pointer to a variable to receive daemon exit code
                           "/var/run/logger.pid");       // Path to the PID-file
 
+    // Add Logger process's pid and type to process list
     g_queue_push_tail(b_list, make_backend(pid, LOGGER_PROCESS));
+    /* End of Logger process related tasks */
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);

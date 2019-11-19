@@ -35,7 +35,7 @@ int logger(void* udata) {
 */
 
     // Push greeting to log queue
-    g_queue_push_tail(log_params->log_queue, "Control process initialized\n");
+    g_queue_push_tail(log_params->log_queue, "Logger process initialized\n");
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -113,4 +113,18 @@ int logger(void* udata) {
     closelog();
 
     return exit_code;
+}
+
+
+void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
+    // When log_queue is not empty, write its elements to log_fp,
+    // and pop them from log_queue
+    if (!g_queue_is_empty(log_queue)) {
+        /*
+         * Use lock here
+         */
+        while (!g_queue_is_empty(log_queue)) {
+
+        }
+    }
 }

@@ -22,4 +22,6 @@ log_record* make_lrec(char* rec);
 
 int logger(void* udata);
 
+void handle_log_queue(GQueue* log_queue, FILE* log_fptr);
+
 #endif
