@@ -3,6 +3,14 @@
 #include "headers/general.h"
 #include "headers/logger.h"
 
+inline char* get_log_rec(GList* item);
+
+
+// Get backend process type from backend list item
+inline char* get_log_rec(GList* item) {
+    return ((log_record*)item->data)->rec;
+}
+
 
 int logger(void* udata) {
 
@@ -35,7 +43,7 @@ int logger(void* udata) {
 */
 
     // Push greeting to log queue
-    g_queue_push_tail(log_params->log_queue, "Logger process initialized\n");
+    g_queue_push_tail(log_params->log_queue, make_lrec("Logger process initialized\n"));
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -62,6 +70,11 @@ int logger(void* udata) {
     // The control process loop
     int need_exit = 0;
     while (!need_exit) {
+
+        // Logger process job
+        handle_log_queue(log_params->log_queue, log_fp);
+        //
+
         int result;
         fd_set readset;
 
@@ -120,11 +133,17 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
     // When log_queue is not empty, write its elements to log_fp,
     // and pop them from log_queue
     if (!g_queue_is_empty(log_queue)) {
+        syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
         /*
          * Use lock here
          */
-        while (!g_queue_is_empty(log_queue)) {
-
+        while(!g_queue_is_empty(log_queue)) {
+            // Write log records until the log queue is not empty
+            fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
+            g_queue_pop_head(log_queue);
         }
+
+        // Flush data to disk
+        fflush(log_fp);
     }
 }

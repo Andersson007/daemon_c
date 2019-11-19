@@ -12,6 +12,7 @@ inline pid_t get_b_pid(GList* item);
 
 inline int get_b_type(GList* item);
 
+
 // Return ptr to struct backend process representation
 backend_node* make_backend(pid_t b_pid, unsigned b_type) {
     backend_node* b = g_new(backend_node, 1);
@@ -67,7 +68,7 @@ int control_process(void *udata) {
 
     // Initialize log shared structure
     GQueue* log_queue = g_queue_new();
-    g_queue_push_tail(log_queue, "control process initialized\n");
+    g_queue_push_tail(log_queue, make_lrec("Control process initialized\n"));
 
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
