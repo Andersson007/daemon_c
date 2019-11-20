@@ -3,7 +3,7 @@
 #include "headers/general.h"
 #include "headers/logger.h"
 
-pthread_mutex_t lq_mtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lq_mtx;
 
 inline char* get_log_rec(GList* item);
 
@@ -30,6 +30,12 @@ int logger(void* udata) {
     // Greeting by syslog
     syslog(LOG_INFO, "logger started. PID: %d, TYPE: %d",
            getpid(), LOGGER_PROCESS);
+
+    // Try to initialize dynamically allocated mutex
+    // for log queue
+    if (pthread_mutex_init(&lq_mtx, NULL)) {
+        syslog(LOG_ERR, "logger cannot allocat the mutex");
+    }
 
     FILE* log_fp = fopen(log_params->log_fpath, "a+");
     if (!log_fp) {
@@ -115,8 +121,9 @@ int logger(void* udata) {
     }
 
     // Clean up
-    fclose(log_fp);     // Log file descriptor
-    free(log_params);   // Log params struct
+    fclose(log_fp);                 // Log file descriptor
+    free(log_params);               // Log params struct
+    pthread_mutex_destroy(&lq_mtx); // Mutex for log queue
 
     // Close the signal file descriptor
     close(sfd);
