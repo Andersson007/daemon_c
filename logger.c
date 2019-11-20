@@ -10,6 +10,7 @@ inline char* get_log_rec(GList* item);
 
 static void init_log_queue_mutex(void);
 
+static FILE* open_log(char* log_fpath);
 
 // Get backend process type from backend list item
 inline char* get_log_rec(GList* item) {
@@ -36,17 +37,8 @@ int logger(void* udata) {
     // Initialize 
     init_log_queue_mutex();
 
-    FILE* log_fp = fopen(log_params->log_fpath, "a+");
-    if (!log_fp) {
-        syslog(LOG_ERR, "could not open the log file %s",
-               log_params->log_fpath);
-        exit(1);
-    }
-
-/* DEBUG */
-    fprintf(log_fp, "logger 'hello'\n");
-    fflush(log_fp);
-/**/
+    // Open log file in "a+" mode
+    FILE* log_fp = open_log(log_params->log_fpath);
 
     // Push greeting to log queue
     to_log_queue(log_params->log_queue, "Logger process initialized\n");
@@ -199,4 +191,20 @@ static void init_log_queue_mutex(void) {
                         "initialize mutex, errc %d", rc);
         exit(rc);
     }
+}
+
+
+// Open log file in "a+" mode
+static FILE* open_log(char* log_fpath) {
+    FILE* log_fp = fopen(log_fpath, "a+");
+    if (!log_fp) {
+        syslog(LOG_ERR, "could not open the log file %s", log_fpath);
+        exit(1);
+    }
+
+/* DEBUG */
+    fprintf(log_fp, "logger 'hello'\n");
+    fflush(log_fp);
+/**/
+    return log_fp;
 }
