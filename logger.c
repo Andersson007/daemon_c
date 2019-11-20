@@ -4,6 +4,7 @@
 #include "headers/logger.h"
 
 pthread_mutex_t lq_mtx;
+pthread_mutexattr_t attrmutex;
 
 inline char* get_log_rec(GList* item);
 
@@ -33,7 +34,10 @@ int logger(void* udata) {
 
     // Try to initialize dynamically allocated mutex
     // for log queue
-    if (pthread_mutex_init(&lq_mtx, NULL)) {
+    pthread_mutexattr_init(&attrmutex);
+    pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
+
+    if (pthread_mutex_init(&lq_mtx, &attrmutex)) {
         syslog(LOG_ERR, "logger cannot allocat the mutex");
     }
 
@@ -47,8 +51,7 @@ int logger(void* udata) {
 /* DEBUG */
     fprintf(log_fp, "logger 'hello'\n");
     fflush(log_fp);
-/*
-*/
+/**/
 
     // Push greeting to log queue
     to_log_queue(log_params->log_queue, "Logger process initialized\n");
@@ -124,6 +127,7 @@ int logger(void* udata) {
     fclose(log_fp);                 // Log file descriptor
     free(log_params);               // Log params struct
     pthread_mutex_destroy(&lq_mtx); // Mutex for log queue
+    pthread_mutexattr_destroy(&attrmutex); // Mutex attr
 
     // Close the signal file descriptor
     close(sfd);
