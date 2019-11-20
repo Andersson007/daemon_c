@@ -3,6 +3,8 @@
 #include "headers/general.h"
 #include "headers/logger.h"
 
+pthread_mutex_t lq_mtx = PTHREAD_MUTEX_INITIALIZER;
+
 inline char* get_log_rec(GList* item);
 
 
@@ -43,7 +45,7 @@ int logger(void* udata) {
 */
 
     // Push greeting to log queue
-    g_queue_push_tail(log_params->log_queue, make_lrec("Logger process initialized\n"));
+    to_log_queue(log_params->log_queue, "Logger process initialized\n");
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -140,13 +142,28 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
          */
         while(!g_queue_is_empty(log_queue)) {
             // Write log records until the log queue is not empty
-            fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
-            g_queue_pop_head(log_queue);
+            if (!pthread_mutex_lock(&lq_mtx)) {
+                fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
+                g_queue_pop_head(log_queue);
+                pthread_mutex_unlock(&lq_mtx);
+            }
         }
 /* Debug */
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
 
         // Flush data to disk
         fflush(log_fp);
+    }
+}
+
+
+void to_log_queue(GQueue* log_queue, char* rec) {
+    // TODO: should be changed to more efficient way
+    // to prevent waiting
+    log_record* l_rec = make_lrec(rec);
+
+    if (!pthread_mutex_lock(&lq_mtx)) {
+        g_queue_push_tail(log_queue, l_rec);
+        pthread_mutex_unlock(&lq_mtx);
     }
 }

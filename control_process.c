@@ -68,7 +68,7 @@ int control_process(void *udata) {
 
     // Initialize log shared structure
     GQueue* log_queue = g_queue_new();
-    g_queue_push_tail(log_queue, make_lrec("Control process initialized\n"));
+    to_log_queue(log_queue, "Control process initialized\n");
 
     // Open the system log
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);

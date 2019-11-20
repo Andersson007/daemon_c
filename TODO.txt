@@ -1,4 +1,6 @@
 1. Implement lock of log_queue when Logger is writing
+    1.1. To think about a mechanism to push a log message
+        to local buffer / another (spare) log queue when log_queue is locking
 2. When the control process get an appropriate signal
     2.1. Send signals to forks to finish work and exit (now it is only Logger)
     2.2. Finishes itself

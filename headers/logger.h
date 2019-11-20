@@ -2,6 +2,7 @@
 #define LOGGER_H
 
 #include <glib.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,5 +24,7 @@ log_record* make_lrec(char* rec);
 int logger(void* udata);
 
 void handle_log_queue(GQueue* log_queue, FILE* log_fptr);
+
+void to_log_queue(GQueue* log_queue, char* rec);
 
 #endif
