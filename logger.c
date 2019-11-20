@@ -140,7 +140,7 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
          */
         while(!g_queue_is_empty(log_queue)) {
             // Write log records until the log queue is not empty
-            if (!pthread_mutex_lock(&lq_mtx)) {
+            if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
                 fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
                 g_queue_pop_head(log_queue);
                 pthread_mutex_unlock(&lq_mtx);
@@ -160,7 +160,7 @@ void to_log_queue(GQueue* log_queue, char* rec) {
     // to prevent waiting
     log_record* l_rec = make_lrec(rec);
 
-    if (!pthread_mutex_lock(&lq_mtx)) {
+    if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
         g_queue_push_tail(log_queue, l_rec);
         pthread_mutex_unlock(&lq_mtx);
     }
