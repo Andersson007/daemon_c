@@ -8,6 +8,8 @@ pthread_mutexattr_t attrmutex;
 
 inline char* get_log_rec(GList* item);
 
+static void init_log_queue_mutex(void);
+
 
 // Get backend process type from backend list item
 inline char* get_log_rec(GList* item) {
@@ -16,7 +18,6 @@ inline char* get_log_rec(GList* item) {
 
 
 int logger(void* udata) {
-
     logger_params* log_params = (logger_params*) udata;
 
     int exit_code = EXIT_SUCCESS;
@@ -29,17 +30,11 @@ int logger(void* udata) {
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
 
     // Greeting by syslog
-    syslog(LOG_INFO, "logger started. PID: %d, TYPE: %d",
+    syslog(LOG_INFO, "logger: started. PID: %d, TYPE: %d",
            getpid(), LOGGER_PROCESS);
 
-    // Try to initialize dynamically allocated mutex
-    // for log queue
-    pthread_mutexattr_init(&attrmutex);
-    pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
-
-    if (pthread_mutex_init(&lq_mtx, &attrmutex)) {
-        syslog(LOG_ERR, "logger cannot allocat the mutex");
-    }
+    // Initialize 
+    init_log_queue_mutex();
 
     FILE* log_fp = fopen(log_params->log_fpath, "a+");
     if (!log_fp) {
@@ -176,5 +171,32 @@ void to_log_queue(GQueue* log_queue, char* rec) {
     if (!pthread_mutex_lock(&lq_mtx)) {
         g_queue_push_tail(log_queue, l_rec);
         pthread_mutex_unlock(&lq_mtx);
+    }
+}
+
+
+// Initialize mutex for log queue
+static void init_log_queue_mutex(void) {
+    unsigned rc = EXIT_SUCCESS;
+
+    rc = pthread_mutexattr_init(&attrmutex);
+    if (rc != SUCCEED) {
+        syslog(LOG_ERR, "logger: pthread_mutexattr_init() cannot "
+                        "initialize mutexattr, errc %d", rc);
+        exit(rc);
+    }
+
+    rc = pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
+    if (rc != SUCCEED) {
+        syslog(LOG_ERR, "logger: pthread_mutexattr_setpshared() cannot "
+                        "set mutexattr shared, errc %d", rc);
+        exit(rc);
+    }
+
+    rc = pthread_mutex_init(&lq_mtx, &attrmutex);
+    if (rc != SUCCEED) {
+        syslog(LOG_ERR, "logger: pthread_mutex_init() cannot "
+                        "initialize mutex, errc %d", rc);
+        exit(rc);
     }
 }
