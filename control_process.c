@@ -85,10 +85,10 @@ int control_process(void *udata) {
         exit(1);
     }
     else {
-/* DEBUG */
+        /* DEBUG */
         fprintf(log_fp, "control process 'hello'\n");
         fflush(log_fp);
-/**/
+        /**/
         fclose(log_fp);
     }
 

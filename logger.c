@@ -133,7 +133,7 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
     // When log_queue is not empty, write its elements to log_fp,
     // and pop them from log_queue
     if (!g_queue_is_empty(log_queue)) {
-/* Debug */
+        /* Debug */
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
         /*
          * Use lock here
@@ -146,7 +146,7 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
                 pthread_mutex_unlock(&lq_mtx);
             }
         }
-/* Debug */
+        /*******/
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
 
         // Flush data to disk
@@ -202,9 +202,9 @@ static FILE* open_log(char* log_fpath) {
         exit(1);
     }
 
-/* DEBUG */
+    /* DEBUG */
     fprintf(log_fp, "logger 'hello'\n");
     fflush(log_fp);
-/**/
+    /**/
     return log_fp;
 }
