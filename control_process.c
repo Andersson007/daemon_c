@@ -74,19 +74,19 @@ int control_process(void *udata) {
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
 
     // Greeting
-    syslog(LOG_INFO, "control proc started. PID: %d, TYPE: %d",
+    syslog(LOG_INFO, "Control process started. PID: %d, TYPE: %d",
            get_b_pid(cnt_proc), get_b_type(cnt_proc));
 
     // Logger related actions
     char* log_fpath = DEFAULT_LOG_PATH;
     FILE* log_fp = fopen(log_fpath, "a+");
     if (!log_fp) {
-        syslog(LOG_ERR, "could not open the log file %s", log_fpath);
+        syslog(LOG_ERR, "Control process: could not open the log file %s", log_fpath);
         exit(1);
     }
     else {
         /* DEBUG */
-        fprintf(log_fp, "control process 'hello'\n");
+        fprintf(log_fp, "Control process: 'hello'\n");
         fflush(log_fp);
         /**/
         fclose(log_fp);
@@ -121,7 +121,7 @@ int control_process(void *udata) {
 
     sfd = signalfd(-1, &mask, 0);
     if (sfd == -1) {
-        perror("signalfd failed");
+        perror("Control process: signalfd failed");
         sigprocmask(SIG_UNBLOCK, &mask, NULL);
         closelog();
         return EXIT_FAILURE;
@@ -146,7 +146,7 @@ int control_process(void *udata) {
         // Wait for the data in the signal file descriptor
         result = select(FD_SETSIZE, &readset, NULL, NULL, &signal_timeo);
         if (result == -1) {
-            syslog(LOG_ERR, "Fatal error during select() call.");
+            syslog(LOG_ERR, "Control process: fatal error during select() call.");
             // Low level error
             exit_code = EXIT_FAILURE;
             break;
@@ -157,14 +157,16 @@ int control_process(void *udata) {
             // Handle the signals
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
-                    syslog(LOG_INFO, "Got SIGTERM signal. Stopping daemon...");
+                    syslog(LOG_INFO, "Control process: ot SIGTERM signal. Stopping daemon...");
                     need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
-                    syslog(LOG_INFO, "Got SIGHUP signal.");
+                    syslog(LOG_INFO, "Control process: got SIGHUP signal.");
                     break;
                 default:
-                    syslog(LOG_WARNING, "Got unexpected signal (number: %d).", si.ssi_signo);
+                    syslog(LOG_WARNING,
+                           "Control process: got unexpected signal (number: %d).",
+                           si.ssi_signo);
                     break;
             }
         }
@@ -184,7 +186,7 @@ int control_process(void *udata) {
     // Remove the sighal handlers
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
     // Write an exit code to the system log
-    syslog(LOG_INFO, "Control process stopped with status code %d.", exit_code);
+    syslog(LOG_INFO, "Control process: stopped with status code %d.", exit_code);
     // Close the system log
     closelog();
 

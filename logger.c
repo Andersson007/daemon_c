@@ -31,7 +31,7 @@ int logger(void* udata) {
     openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
 
     // Greeting by syslog
-    syslog(LOG_INFO, "logger: started. PID: %d, TYPE: %d",
+    syslog(LOG_INFO, "Logger process started. PID: %d, TYPE: %d",
            getpid(), LOGGER_PROCESS);
 
     // Initialize 
@@ -59,7 +59,7 @@ int logger(void* udata) {
 
     sfd = signalfd(-1, &mask, 0);
     if (sfd == -1) {
-        perror("signalfd failed");
+        perror("Logger process: signalfd failed");
         sigprocmask(SIG_UNBLOCK, &mask, NULL);
         closelog();
         return EXIT_FAILURE;
@@ -90,7 +90,7 @@ int logger(void* udata) {
         //result = select(FD_SETSIZE, &readset, NULL, NULL, NULL);
         result = select(FD_SETSIZE, &readset, NULL, NULL, &signal_timeo);
         if (result == -1) {
-            syslog(LOG_ERR, "Fatal error during select() call.");
+            syslog(LOG_ERR, "Logger process: fatal error during select() call.");
             // Low level error
             exit_code = EXIT_FAILURE;
             break;
@@ -101,19 +101,20 @@ int logger(void* udata) {
             // Handle the signals
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
-                    syslog(LOG_INFO, "Got SIGTERM signal. Stopping daemon...");
+                    syslog(LOG_INFO, "Logger process: got SIGTERM signal. Stopping daemon...");
                     need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
-                    syslog(LOG_INFO, "Got SIGHUP signal.");
+                    syslog(LOG_INFO, "Logger process: got SIGHUP signal.");
                     break;
                 default:
-                    syslog(LOG_WARNING, "Got unexpected signal (number: %d).", si.ssi_signo);
+                    syslog(LOG_WARNING,
+                           "Logger process: got unexpected signal (number: %d).", si.ssi_signo);
                     break;
             }
         }
         /* DEBUG */
-        syslog(LOG_INFO, "logger: in loop");
+        syslog(LOG_INFO, "Logger process: in loop");
         sleep(10);
         /*********/
     }
@@ -129,7 +130,7 @@ int logger(void* udata) {
     // Remove the sighal handlers
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
     // Write an exit code to the system log
-    syslog(LOG_INFO, "Logger stopped with status code %d.", exit_code);
+    syslog(LOG_INFO, "Logger process stopped with status code %d.", exit_code);
     // Close the system log
     closelog();
 
@@ -181,21 +182,21 @@ static void init_log_queue_mutex(void) {
 
     rc = pthread_mutexattr_init(&attrmutex);
     if (rc != SUCCEED) {
-        syslog(LOG_ERR, "logger: pthread_mutexattr_init() cannot "
+        syslog(LOG_ERR, "Logger process: pthread_mutexattr_init() cannot "
                         "initialize mutexattr, errc %d", rc);
         exit(rc);
     }
 
     rc = pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
     if (rc != SUCCEED) {
-        syslog(LOG_ERR, "logger: pthread_mutexattr_setpshared() cannot "
+        syslog(LOG_ERR, "Logger process: pthread_mutexattr_setpshared() cannot "
                         "set mutexattr shared, errc %d", rc);
         exit(rc);
     }
 
     rc = pthread_mutex_init(&lq_mtx, &attrmutex);
     if (rc != SUCCEED) {
-        syslog(LOG_ERR, "logger: pthread_mutex_init() cannot "
+        syslog(LOG_ERR, "Logger process: pthread_mutex_init() cannot "
                         "initialize mutex, errc %d", rc);
         exit(rc);
     }
@@ -211,7 +212,7 @@ static FILE* open_log(char* log_fpath) {
     }
 
     /* DEBUG */
-    fprintf(log_fp, "logger 'hello'\n");
+    fprintf(log_fp, "Logger 'hello'\n");
     fflush(log_fp);
     /**/
     return log_fp;
