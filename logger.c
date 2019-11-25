@@ -65,6 +65,9 @@ int logger(void* udata) {
         return EXIT_FAILURE;
     }
 
+    // Timeout for waiting signals by select() func
+    struct timeval signal_timeo = { .tv_sec = SIG_WAIT_TIMEO, .tv_usec = 0 };
+
     // The control process loop
     int need_exit = 0;
     while (!need_exit) {
@@ -84,7 +87,8 @@ int logger(void* udata) {
         // using event-driven approach
 
         // Wait for the data in the signal file descriptor
-        result = select(FD_SETSIZE, &readset, NULL, NULL, NULL);
+        //result = select(FD_SETSIZE, &readset, NULL, NULL, NULL);
+        result = select(FD_SETSIZE, &readset, NULL, NULL, &signal_timeo);
         if (result == -1) {
             syslog(LOG_ERR, "Fatal error during select() call.");
             // Low level error
@@ -108,6 +112,10 @@ int logger(void* udata) {
                     break;
             }
         }
+        /* DEBUG */
+        syslog(LOG_INFO, "logger: in loop");
+        sleep(10);
+        /*********/
     }
 
     // Clean up

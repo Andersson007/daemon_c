@@ -9,4 +9,6 @@
 
 #define SUCCEED 0
 
+#define SIG_WAIT_TIMEO 0
+
 #endif

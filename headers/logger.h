@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sys/select.h>
 #include <sys/signalfd.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 typedef struct logger_params {
