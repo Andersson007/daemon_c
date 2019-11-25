@@ -8,4 +8,3 @@
 2. When the control process get an appropriate signal
     2.1. Send signals to forks to finish work and exit (now it is only Logger)
     2.2. Finishes itself
-    2.3. Processes mustn't wait for signals in loops, just check each iteration
