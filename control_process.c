@@ -12,6 +12,8 @@ inline pid_t get_b_pid(GList* item);
 
 inline int get_b_type(GList* item);
 
+void terminate_service_backends(GQueue* b_list);
+
 
 // Return ptr to struct backend process representation
 backend_node* make_backend(pid_t b_pid, unsigned b_type) {
@@ -157,7 +159,8 @@ int control_process(void *udata) {
             // Handle the signals
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
-                    syslog(LOG_INFO, "Control process: ot SIGTERM signal. Stopping daemon...");
+                    syslog(LOG_INFO, "Control process: ot SIGTERM signal. "
+                                     "Terminate backends and stop daemon...");
                     need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
@@ -191,4 +194,23 @@ int control_process(void *udata) {
     closelog();
 
     return exit_code;
+}
+
+
+void terminate_service_backends(GQueue* b_list) {
+
+    GList* b_proc = NULL;
+
+    while (1) {
+        b_proc = g_queue_peek_tail_link(b_list);
+
+        if (get_b_type(b_proc) == CONTROL_PROCESS || b_proc == NULL) {
+            break;
+        }
+
+        // Send SIGTERM to the backend and
+        // remove its structure from the backend list
+        kill(get_b_pid(b_proc), SIGTERM);
+        g_queue_pop_tail(b_list);
+    }
 }
