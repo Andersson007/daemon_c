@@ -28,7 +28,7 @@ int logger(void* udata) {
     struct signalfd_siginfo si;
 
     // Open the system log
-    openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
+    openlog("daemon Logger", LOG_NDELAY, LOG_DAEMON);
 
     // Greeting by syslog
     syslog(LOG_INFO, "Logger process started. PID: %d, TYPE: %d",
@@ -114,7 +114,7 @@ int logger(void* udata) {
             }
         }
         /* DEBUG */
-        syslog(LOG_INFO, "Logger process: in loop");
+        syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
         sleep(10);
         /*********/
     }
@@ -134,7 +134,8 @@ int logger(void* udata) {
     // Close the system log
     closelog();
 
-    return exit_code;
+    //return exit_code;
+    exit(exit_code);
 }
 
 

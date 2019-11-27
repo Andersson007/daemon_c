@@ -73,7 +73,7 @@ int control_process(void *udata) {
     to_log_queue(log_queue, "Control process initialized\n");
 
     // Open the system log
-    openlog(PROGNAME, LOG_NDELAY, LOG_DAEMON);
+    openlog("daemon Control process", LOG_NDELAY, LOG_DAEMON);
 
     // Greeting
     syslog(LOG_INFO, "Control process started. PID: %d, TYPE: %d",
@@ -159,8 +159,9 @@ int control_process(void *udata) {
             // Handle the signals
             switch (si.ssi_signo) {
                 case SIGTERM:   // Stop the daemon
-                    syslog(LOG_INFO, "Control process: ot SIGTERM signal. "
+                    syslog(LOG_INFO, "Control process: got SIGTERM signal. "
                                      "Terminate backends and stop daemon...");
+                    terminate_service_backends(b_list);
                     need_exit = 1;
                     break;
                 case SIGHUP:    // Reload the configuration
@@ -174,7 +175,7 @@ int control_process(void *udata) {
             }
         }
         /* DEBUG */
-        syslog(LOG_INFO, "CP: in loop");
+        syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
         sleep(10);
         /*********/
     }
@@ -193,24 +194,41 @@ int control_process(void *udata) {
     // Close the system log
     closelog();
 
-    return exit_code;
+    //return exit_code;
+    exit(exit_code);
 }
 
 
 void terminate_service_backends(GQueue* b_list) {
 
     GList* b_proc = NULL;
+    int k_rc = 0;
 
     while (1) {
         b_proc = g_queue_peek_tail_link(b_list);
 
         if (get_b_type(b_proc) == CONTROL_PROCESS || b_proc == NULL) {
+            /* DEBUG */
+            syslog(LOG_INFO, "CP: DONT kill %d, it is CP itself %d",
+                   get_b_pid(b_proc), get_b_type(b_proc));
+            /*********/
             break;
         }
 
+        /* DEBUG */
+        syslog(LOG_INFO, "CP: goint to kill %d", get_b_pid(b_proc));
+        /*********/
+
         // Send SIGTERM to the backend and
         // remove its structure from the backend list
-        kill(get_b_pid(b_proc), SIGTERM);
+        k_rc = kill(get_b_pid(b_proc), SIGTERM);
+        if (k_rc == EXIT_SUCCESS) {
+            syslog(LOG_INFO, "CP: killed %d", get_b_pid(b_proc));
+        }
+        else {
+            syslog(LOG_INFO, "CP: cannot kill %d, rcode %d",
+                   get_b_pid(b_proc), k_rc);
+        }
         g_queue_pop_tail(b_list);
     }
 }
