@@ -73,7 +73,7 @@ int logger(void* udata) {
     while (!need_exit) {
         /* DEBUG */
         syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(10);
+        sleep(2);
         /*********/
 
         // Logger process job

@@ -137,7 +137,7 @@ int control_process(void *udata) {
     while (!need_exit) {
         /* DEBUG */
         syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(1);
+        sleep(2);
         /*********/
 
         int result;
