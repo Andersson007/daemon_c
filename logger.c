@@ -71,6 +71,10 @@ int logger(void* udata) {
     // The control process loop
     int need_exit = 0;
     while (!need_exit) {
+        /* DEBUG */
+        syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
+        sleep(10);
+        /*********/
 
         // Logger process job
         handle_log_queue(log_params->log_queue, log_fp);
@@ -113,10 +117,6 @@ int logger(void* udata) {
                     break;
             }
         }
-        /* DEBUG */
-        syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(10);
-        /*********/
     }
 
     // Clean up
@@ -148,10 +148,14 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
         /*
          * Use lock here
          */
+        GList* l_rec = NULL;
+
         while(!g_queue_is_empty(log_queue)) {
             // Write log records until the log queue is not empty
             if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
-                fprintf(log_fp, get_log_rec(g_queue_peek_head_link(log_queue)));
+                l_rec = g_queue_peek_head_link(log_queue);
+                fprintf(log_fp, get_log_rec(l_rec));
+                g_free(l_rec->data);
                 g_queue_pop_head(log_queue);
                 pthread_mutex_unlock(&lq_mtx);
             }

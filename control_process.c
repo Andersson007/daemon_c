@@ -135,6 +135,11 @@ int control_process(void *udata) {
     // The control process loop
     int need_exit = 0;
     while (!need_exit) {
+        /* DEBUG */
+        syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
+        sleep(1);
+        /*********/
+
         int result;
         fd_set readset;
 
@@ -174,16 +179,12 @@ int control_process(void *udata) {
                     break;
             }
         }
-        /* DEBUG */
-        syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(10);
-        /*********/
     }
 
     // Clean up
-    g_queue_free(b_list);       // Backend list
-    g_queue_free(log_queue);    // Log message queue
-    free(log_params);           // Log params
+    g_queue_free_full(b_list, g_free);      // Backend list
+    g_queue_free_full(log_queue, g_free);   // Log message queue
+    free(log_params);               // Log params
 
     // Close the signal file descriptor
     close(sfd);
@@ -229,6 +230,7 @@ void terminate_service_backends(GQueue* b_list) {
             syslog(LOG_INFO, "CP: cannot kill %d, rcode %d",
                    get_b_pid(b_proc), k_rc);
         }
+        g_free(b_proc->data);
         g_queue_pop_tail(b_list);
     }
 }
