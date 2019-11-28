@@ -1,10 +1,1 @@
-(done) 1. Implement lock of log_queue when Logger is writing
-    1.1. To think about a mechanism to push a log message
-        to local buffer / another (spare) log queue when log_queue is locking
-    1.2. Remove mutex from to_log_queue() to avoid mutual affection (e.g. when
-        disks are slow, etc.). Probably we mustn't wait in this case and
-        not to send messages to the queue
-    1.3. Logger will sleep for a certain time between checking the queue
-2. When the control process get an appropriate signal
-    2.1. Send signals to forks to finish work and exit (now it is only Logger)
-    2.2. Finishes itself
+1. Logger will sleep for a certain time between checking the queue
