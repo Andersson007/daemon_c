@@ -21,6 +21,8 @@ log_record* make_lrec(char* rec);
 
 // Control process body
 int control_process(void *udata) {
+    // Get params from main
+    cproc_params* params = (cproc_params*) udata;
 
     int exit_code = EXIT_SUCCESS;
 
@@ -46,10 +48,10 @@ int control_process(void *udata) {
            get_b_pid(cnt_proc), get_b_type(cnt_proc));
 
     // Logger related actions
-    char* log_fpath = DEFAULT_LOG_PATH;
-    FILE* log_fp = fopen(log_fpath, "a+");
+    FILE* log_fp = fopen(params->log_fpath, "a+");
     if (!log_fp) {
-        syslog(LOG_ERR, "Control process: could not open the log file %s", log_fpath);
+        syslog(LOG_ERR, "Control process: could not open the log file %s",
+               params->log_fpath);
         exit(1);
     }
     else {
@@ -60,7 +62,7 @@ int control_process(void *udata) {
         fclose(log_fp);
     }
 
-    logger_params* log_params = make_logger_params(log_queue, log_fpath);
+    logger_params* log_params = make_logger_params(log_queue, params->log_fpath);
 
     /* Logger process related tasks */ 
     // Start Logger process

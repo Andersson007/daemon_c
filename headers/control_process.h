@@ -8,6 +8,10 @@
 #include <sys/signalfd.h>
 #include <unistd.h>
 
+typedef struct cproc_params {
+    char* log_fpath;
+} cproc_params;
+
 int control_process(void *udata);
 
 #endif

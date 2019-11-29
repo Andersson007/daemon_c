@@ -24,6 +24,7 @@ static inline char* get_log_rec(GList* item) {
 
 
 int logger(void* udata) {
+    // Get params from Control process
     logger_params* log_params = (logger_params*) udata;
 
     int exit_code = EXIT_SUCCESS;
