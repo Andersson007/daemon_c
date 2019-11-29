@@ -1,1 +1,2 @@
 1. Logger will sleep for a certain time between checking the queue
+2. Pass a custom log file location through CLI arg
