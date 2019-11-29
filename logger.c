@@ -1,7 +1,12 @@
 #define _POSIX_C_SOURCE 1
+#include <time.h>
 #include "headers/backend.h"
 #include "headers/general.h"
 #include "headers/logger.h"
+#include "headers/timec.h"
+
+// Logger timeout between iterations in milliseconds
+#define LOGGER_TIMEO_MS 100
 
 pthread_mutex_t lq_mtx;
 pthread_mutexattr_t attrmutex;
@@ -75,6 +80,9 @@ int logger(void* udata) {
         syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
         sleep(2);
         /*********/
+
+        // Sleep between iterations
+        msleep(LOGGER_TIMEO_MS);
 
         // Logger process job
         handle_log_queue(log_params->log_queue, log_fp);
