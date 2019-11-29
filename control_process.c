@@ -152,7 +152,8 @@ int control_process(void *udata) {
     // Clean up
     g_queue_free_full(b_list, g_free);      // Backend list
     g_queue_free_full(log_queue, g_free);   // Log message queue
-    free(log_params);               // Log params
+    free(log_params);                       // Log params
+    g_free(params);                         // Control proc params
 
     // Close the signal file descriptor
     close(sfd);
