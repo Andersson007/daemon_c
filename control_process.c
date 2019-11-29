@@ -8,9 +8,9 @@
 #include "headers/general.h"
 #include "headers/logger.h"
 
-inline pid_t get_b_pid(GList* item);
+static inline pid_t get_b_pid(GList* item);
 
-inline int get_b_type(GList* item);
+static inline int get_b_type(GList* item);
 
 void terminate_service_backends(GQueue* b_list);
 
@@ -42,13 +42,13 @@ logger_params* make_logger_params(GQueue* log_queue, char* log_fpath) {
 
 
 // Get backend process pid from backend list item
-inline pid_t get_b_pid(GList* item) {
+static inline pid_t get_b_pid(GList* item) {
     return ((backend_node*)item->data)->b_pid;
 }
 
 
 // Get backend process type from backend list item
-inline int get_b_type(GList* item) {
+static inline int get_b_type(GList* item) {
     return ((backend_node*)item->data)->b_type;
 }
 

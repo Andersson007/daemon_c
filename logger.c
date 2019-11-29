@@ -6,14 +6,14 @@
 pthread_mutex_t lq_mtx;
 pthread_mutexattr_t attrmutex;
 
-inline char* get_log_rec(GList* item);
+static inline char* get_log_rec(GList* item);
 
 static void init_log_queue_mutex(void);
 
 static FILE* open_log(char* log_fpath);
 
 // Get backend process type from backend list item
-inline char* get_log_rec(GList* item) {
+static inline char* get_log_rec(GList* item) {
     return ((log_record*)item->data)->rec;
 }
 
