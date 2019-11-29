@@ -12,45 +12,11 @@ static inline pid_t get_b_pid(GList* item);
 
 static inline int get_b_type(GList* item);
 
-void terminate_service_backends(GQueue* b_list);
+static void terminate_service_backends(GQueue* b_list);
 
+static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath);
 
-// Return ptr to struct backend process representation
-backend_node* make_backend(pid_t b_pid, unsigned b_type) {
-    backend_node* b = g_new(backend_node, 1);
-    b->b_pid = b_pid;
-    b->b_type = b_type;
-    return b;
-}
-
-
-// Return ptr to struct for log message
-log_record* make_lrec(char* rec) {
-    log_record* r = g_new(log_record, 1);
-    r->rec = rec;
-    return r;
-}
-
-
-// Return ptr to struct for logger params
-logger_params* make_logger_params(GQueue* log_queue, char* log_fpath) {
-    logger_params* p = g_new(logger_params, 1);
-    p->log_queue = log_queue;
-    p->log_fpath = log_fpath;
-    return p;
-}
-
-
-// Get backend process pid from backend list item
-static inline pid_t get_b_pid(GList* item) {
-    return ((backend_node*)item->data)->b_pid;
-}
-
-
-// Get backend process type from backend list item
-static inline int get_b_type(GList* item) {
-    return ((backend_node*)item->data)->b_type;
-}
+log_record* make_lrec(char* rec);
 
 
 // Control process body
@@ -233,4 +199,42 @@ void terminate_service_backends(GQueue* b_list) {
         g_free(b_proc->data);
         g_queue_pop_tail(b_list);
     }
+}
+
+
+// Return ptr to struct backend process representation
+backend_node* make_backend(pid_t b_pid, unsigned b_type) {
+    backend_node* b = g_new(backend_node, 1);
+    b->b_pid = b_pid;
+    b->b_type = b_type;
+    return b;
+}
+
+
+// Return ptr to struct for log message
+log_record* make_lrec(char* rec) {
+    log_record* r = g_new(log_record, 1);
+    r->rec = rec;
+    return r;
+}
+
+
+// Return ptr to struct for logger params
+static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath) {
+    logger_params* p = g_new(logger_params, 1);
+    p->log_queue = log_queue;
+    p->log_fpath = log_fpath;
+    return p;
+}
+
+
+// Get backend process pid from backend list item
+static inline pid_t get_b_pid(GList* item) {
+    return ((backend_node*)item->data)->b_pid;
+}
+
+
+// Get backend process type from backend list item
+static inline int get_b_type(GList* item) {
+    return ((backend_node*)item->data)->b_type;
 }
