@@ -59,15 +59,24 @@ int control_process(void *udata) {
     config_setting_t* setting;
     config_init(&cfg);
 
+    /* DEBUG */
+    syslog(LOG_INFO, "Control process: try to read conf file '%s'",
+           glob_args.cfg_fpath);
+    /* ***** */
+
     if (!config_read_file(&cfg, glob_args.cfg_fpath)) {
-        syslog(LOG_ERR, "Control process: %s:%d - %s", config_error_file(&cfg),
-               config_error_line(&cfg), config_error_text(&cfg));
+        syslog(LOG_ERR, "Control process: reading of cfg file failed %s:%d - %s",
+               config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
         config_destroy(&cfg);
         exit(EXIT_FAILURE);
     }
     /* DEBUG */
     syslog(LOG_INFO, "Control process: cfg file is '%s'", glob_args.cfg_fpath);
     /* ***** */
+    setting = config_lookup(&cfg, "log_file_path");
+    if (setting != NULL && !strcmp(glob_args.log_fpath, DEFAULT_LOG_PATH)) {
+        glob_args.log_fpath = (char* ) config_setting_get_string(setting);
+    }
     /* Reading config related tasks */
 
     // Logger related actions
