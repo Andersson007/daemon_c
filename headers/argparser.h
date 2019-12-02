@@ -6,7 +6,8 @@
 // Global argument struct
 struct glob_args_t {
     /* TODO Logger daemon */
-    char *log_file; // -l PATH
+    char* log_fpath; // -l PATH
+    char* cfg_fpath; // -c PATH
 } glob_args;
 
 // Parse command-line arguments

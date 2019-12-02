@@ -9,13 +9,16 @@ void get_cli_args(int argc, char **argv) {
     int opt = 0;
 
     // Allowable command-line arguments
-    const char *opt_string = "l:";
+    const char *opt_string = "l:c:";
 
     opt = getopt(argc, argv, opt_string);
     while (opt != -1) {
         switch(opt) {
             case 'l':
-                glob_args.log_file = optarg;
+                glob_args.log_fpath = optarg;
+                break;
+            case 'c':
+                glob_args.cfg_fpath = optarg;
                 break;
             default:
                 break;

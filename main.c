@@ -1,25 +1,19 @@
 #define _POSIX_C_SOURCE 1
 
 #include <glib.h>
-#include <libconfig.h>
 #include "headers/argparser.h"
 #include "headers/control_process.h"
 #include "headers/daemonize.h"
 #include "headers/general.h"
 
-static cproc_params* make_cproc_params(char* log_fpath);
+static cproc_params* make_cproc_params(int argc, char **argv);
 
 
 int main (int argc, char **argv) {
 
     int exit_code = 0;
 
-    glob_args.log_file = DEFAULT_LOG_PATH;
-
-    // Get command-line arguments
-    get_cli_args(argc, argv);
-
-    cproc_params* params = make_cproc_params(glob_args.log_file);
+    cproc_params* params = make_cproc_params(argc, argv);
 
     pid_t pid = rundaemon(0,                        // Daemon creation flags
                           control_process,          // Daemon body function
@@ -47,8 +41,9 @@ int main (int argc, char **argv) {
 
 
 // Return ptr to struct for logger params
-static cproc_params* make_cproc_params(char* log_fpath) {
+static cproc_params* make_cproc_params(int argc, char** argv) {
     cproc_params* p = g_new(cproc_params, 1);
-    p->log_fpath = log_fpath;
+    p->argc = argc;
+    p->argv = argv;
     return p;
 }

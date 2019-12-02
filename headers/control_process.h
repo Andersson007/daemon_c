@@ -9,7 +9,8 @@
 #include <unistd.h>
 
 typedef struct cproc_params {
-    char* log_fpath;
+    int argc;
+    char** argv;
 } cproc_params;
 
 int control_process(void *udata);

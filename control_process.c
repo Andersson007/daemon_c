@@ -1,7 +1,10 @@
 #define _POSIX_C_SOURCE 1
 
 #include <glib.h>
+#include <libconfig.h>
 #include <sys/types.h>
+
+#include "headers/argparser.h"
 #include "headers/backend.h"
 #include "headers/control_process.h"
 #include "headers/daemonize.h"
@@ -21,14 +24,18 @@ log_record* make_lrec(char* rec);
 
 // Control process body
 int control_process(void *udata) {
+
+    // Defaults
+    int exit_code = EXIT_SUCCESS;
+
+    glob_args.log_fpath = DEFAULT_LOG_PATH;
+    glob_args.cfg_fpath = DEFAULT_CNF_PATH;
+
     // Get params from main
     cproc_params* params = (cproc_params*) udata;
 
-    int exit_code = EXIT_SUCCESS;
-
-    int sfd = -1;
-    sigset_t mask;
-    struct signalfd_siginfo si;
+    // Get command-line arguments
+    get_cli_args(params->argc, params->argv);
 
     // Initialize backend list
     GQueue* b_list = g_queue_new();
@@ -47,11 +54,27 @@ int control_process(void *udata) {
     syslog(LOG_INFO, "Control process started. PID: %d, TYPE: %d",
            get_b_pid(cnt_proc), get_b_type(cnt_proc));
 
+    /* Reading config related tasks */
+    config_t cfg;
+    config_setting_t* setting;
+    config_init(&cfg);
+
+    if (!config_read_file(&cfg, glob_args.cfg_fpath)) {
+        syslog(LOG_ERR, "Control process: %s:%d - %s", config_error_file(&cfg),
+               config_error_line(&cfg), config_error_text(&cfg));
+        config_destroy(&cfg);
+        exit(EXIT_FAILURE);
+    }
+    /* DEBUG */
+    syslog(LOG_INFO, "Control process: cfg file is '%s'", glob_args.cfg_fpath);
+    /* ***** */
+    /* Reading config related tasks */
+
     // Logger related actions
-    FILE* log_fp = fopen(params->log_fpath, "a+");
+    FILE* log_fp = fopen(glob_args.log_fpath, "a+");
     if (!log_fp) {
         syslog(LOG_ERR, "Control process: could not open the log file %s",
-               params->log_fpath);
+               glob_args.log_fpath);
         exit(1);
     }
     else {
@@ -62,7 +85,7 @@ int control_process(void *udata) {
         fclose(log_fp);
     }
 
-    logger_params* log_params = make_logger_params(log_queue, params->log_fpath);
+    logger_params* log_params = make_logger_params(log_queue, glob_args.log_fpath);
 
     /* Logger process related tasks */ 
     // Start Logger process
@@ -74,6 +97,12 @@ int control_process(void *udata) {
     // Add Logger process's pid and type to process list
     g_queue_push_tail(b_list, make_backend(pid, LOGGER_PROCESS));
     /* End of Logger process related tasks */
+
+
+    /* Signal handling prep related tasks */
+    int sfd = -1;
+    sigset_t mask;
+    struct signalfd_siginfo si;
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -96,6 +125,7 @@ int control_process(void *udata) {
         closelog();
         return EXIT_FAILURE;
     }
+    /* End of signal handling prep tasks */
 
     // Timeout for waiting signals by select() func
     struct timeval signal_timeo = { .tv_sec = SIG_WAIT_TIMEO, .tv_usec = 0 };
@@ -154,6 +184,7 @@ int control_process(void *udata) {
     g_queue_free_full(log_queue, g_free);   // Log message queue
     free(log_params);                       // Log params
     g_free(params);                         // Control proc params
+    config_destroy(&cfg);                   // Configuration struct
 
     // Close the signal file descriptor
     close(sfd);

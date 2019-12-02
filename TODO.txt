@@ -1,0 +1,1 @@
+1. Add usage some logging lib in Logger proc
