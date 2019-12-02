@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 1
 
 #include <glib.h>
+#include <libconfig.h>
 #include "headers/argparser.h"
 #include "headers/control_process.h"
 #include "headers/daemonize.h"
