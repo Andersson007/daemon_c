@@ -16,9 +16,19 @@ static void init_log_queue_mutex(void);
 
 static FILE* open_log(char* log_fpath);
 
-// Get backend process type from backend list item
+// Get msg field from log record struct
 static inline char* get_log_msg(GList* item) {
     return ((log_record*)item->data)->msg;
+}
+
+// Get ts_epoch from log record struct
+static inline time_t get_log_ts_epoch(GList* item) {
+    return ((log_record*)item->data)->ts_epoch;
+}
+
+// Get msg_lvl fielsd from log_record struct
+static inline int get_log_msg_lvl(GList* item) {
+    return ((log_record*)item->data)->msg_lvl;
 }
 
 
@@ -166,10 +176,14 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
             // Write log records until the log queue is not empty
             if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
                 // TODO: free mem allocated for r->rec by make_lrec()
+                //char* pretty_ts = get_now_ts_pretty(get_log_ts_epoch(l_rec));
+                char* pretty_ts = get_now_ts_pretty(time(NULL));
                 l_rec = g_queue_peek_head_link(log_queue);
-                fprintf(log_fp, get_log_msg(l_rec));
+                fprintf(log_fp, "%s [%d] %s", pretty_ts,
+                        get_log_msg_lvl(l_rec), get_log_msg(l_rec));
                 //free(get_log_msg(l_rec));
                 g_free(l_rec->data);
+                free(pretty_ts);
                 g_queue_pop_head(log_queue);
                 pthread_mutex_unlock(&lq_mtx);
             }

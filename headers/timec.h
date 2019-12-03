@@ -5,6 +5,6 @@
 
 void msleep(unsigned long msec);
 
-char* get_now_ts_pretty(void);
+char* get_now_ts_pretty(time_t ts_epoch);
 
 #endif

@@ -12,10 +12,10 @@ void msleep(unsigned long msec) {
 }
 
 
-char* get_now_ts_pretty(void) {
-    time_t rawtime = time(NULL);
-    struct tm* t_info = localtime(&rawtime);
+char* get_now_ts_pretty(time_t ts_epoch) {
+    struct tm* t_info = localtime(&ts_epoch);
     char* t_stamp;
+    // TODO: pass format string through .cfg file
     char* format = "%Y/%m/%d %H:%M:%S";
 
     t_stamp = (char*) malloc(TS_BUFSIZE * sizeof(char) + 1);
