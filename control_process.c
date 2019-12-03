@@ -22,6 +22,7 @@ static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath);
 
 // Control process body
 int control_process(void *udata) {
+    char msg[LOG_REC_BUF_LEN];  // Log msg buffer
 
     // Defaults
     int exit_code = EXIT_SUCCESS;

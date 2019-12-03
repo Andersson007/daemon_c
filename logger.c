@@ -8,27 +8,25 @@
 // Logger timeout between iterations in milliseconds
 #define LOGGER_TIMEO_MS 100
 
-// Max length of log record in bytes
-#define LOG_REC_BUF_LEN 256
-
-pthread_mutex_t lq_mtx;
 pthread_mutexattr_t attrmutex;
 
-static inline char* get_log_rec(GList* item);
+static inline char* get_log_msg(GList* item);
 
 static void init_log_queue_mutex(void);
 
 static FILE* open_log(char* log_fpath);
 
 // Get backend process type from backend list item
-static inline char* get_log_rec(GList* item) {
-    return ((log_record*)item->data)->rec;
+static inline char* get_log_msg(GList* item) {
+    return ((log_record*)item->data)->msg;
 }
 
 
 int logger(void* udata) {
     // Get params from Control process
     logger_params* log_params = (logger_params*) udata;
+
+    char msg[LOG_REC_BUF_LEN];  // Log msg buffer 
 
     int exit_code = EXIT_SUCCESS;
 
@@ -135,6 +133,7 @@ int logger(void* udata) {
     // Clean up
     fclose(log_fp);                 // Log file descriptor
     free(log_params);               // Log params struct
+    //g_queue_free_full(log_queue, g_free);   // Log message queue
     pthread_mutex_destroy(&lq_mtx); // Mutex for log queue
     pthread_mutexattr_destroy(&attrmutex); // Mutex attr
 
@@ -166,8 +165,10 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
         while(!g_queue_is_empty(log_queue)) {
             // Write log records until the log queue is not empty
             if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
+                // TODO: free mem allocated for r->rec by make_lrec()
                 l_rec = g_queue_peek_head_link(log_queue);
-                fprintf(log_fp, get_log_rec(l_rec));
+                fprintf(log_fp, get_log_msg(l_rec));
+                //free(get_log_msg(l_rec));
                 g_free(l_rec->data);
                 g_queue_pop_head(log_queue);
                 pthread_mutex_unlock(&lq_mtx);
@@ -178,25 +179,6 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
 
         // Flush data to disk
         fflush(log_fp);
-    }
-}
-
-
-void to_log_queue(GQueue* log_queue, int msg_lvl, char* msg_fmt,...) {
-
-    va_list v_args;
-    va_start(v_args, msg_fmt);
-    char msg[LOG_REC_BUF_LEN];
-
-    snprintf(msg, LOG_REC_BUF_LEN, msg_fmt, v_args);
-    va_end(v_args);
-
-    log_record* l_rec = make_lrec(msg_lvl, msg);
-    va_end(v_args);
-
-    if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
-        g_queue_push_tail(log_queue, l_rec);
-        pthread_mutex_unlock(&lq_mtx);
     }
 }
 
@@ -245,12 +227,10 @@ static FILE* open_log(char* log_fpath) {
 
 
 // Return ptr to struct for log message
-log_record* make_lrec(int msg_lvl, char* rec) {
-    // TODO: free mem allocated for r->rec
+log_record* make_lrec(int msg_lvl, char* msg) {
     log_record* r = g_new(log_record, 1);
     r->ts_epoch = time(NULL);
     r->msg_lvl = msg_lvl;
-    r->rec = (char*) malloc(LOG_REC_BUF_LEN);
-    snprintf(r->rec, LOG_REC_BUF_LEN, rec);
+    snprintf(r->msg, LOG_REC_BUF_LEN, msg);
     return r;
 }
