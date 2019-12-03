@@ -25,15 +25,17 @@ typedef struct logger_params {
 } logger_params;
 
 typedef struct log_record {
+    time_t ts_epoch;
+    int msg_lvl;
     char* rec;
 } log_record;
 
-log_record* make_lrec(char* rec);
+log_record* make_lrec(int msg_lvl, char* rec);
 
 int logger(void* udata);
 
 void handle_log_queue(GQueue* log_queue, FILE* log_fptr);
 
-void to_log_queue(GQueue* log_queue, char* rec);
+void to_log_queue(GQueue* log_queue, int msg_lvl, char* rec_fmt,...);
 
 #endif

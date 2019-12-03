@@ -1,3 +1,4 @@
 1. Add usage some logging lib in Logger proc
 2. Implement log level for debug (and others) by .cfg file
 3. Use not only absolute path
+4. Check log priority of -l is higher than of cfg

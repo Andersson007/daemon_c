@@ -43,7 +43,8 @@ int control_process(void *udata) {
 
     // Initialize log shared structure
     GQueue* log_queue = g_queue_new();
-    to_log_queue(log_queue, "Control process initialized\n");
+    to_log_queue(log_queue, INF,
+                 "Control process initialized (pid %d)\n", getpid());
 
     // Open the system log
     openlog("daemon Control process", LOG_NDELAY, LOG_DAEMON);
@@ -142,7 +143,7 @@ int control_process(void *udata) {
     while (!need_exit) {
         /* DEBUG */
         syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(2);
+        sleep(5);
         /*********/
 
         int result;

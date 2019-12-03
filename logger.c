@@ -8,6 +8,9 @@
 // Logger timeout between iterations in milliseconds
 #define LOGGER_TIMEO_MS 100
 
+// Max length of log record in bytes
+#define LOG_REC_BUF_LEN 256
+
 pthread_mutex_t lq_mtx;
 pthread_mutexattr_t attrmutex;
 
@@ -47,7 +50,8 @@ int logger(void* udata) {
     FILE* log_fp = open_log(log_params->log_fpath);
 
     // Push greeting to log queue
-    to_log_queue(log_params->log_queue, "Logger process initialized\n");
+    to_log_queue(log_params->log_queue, INF,
+                 "Logger process initialized (pid %d)\n", getpid());
 
     // Create a file descriptor for signal handling
     sigemptyset(&mask);
@@ -79,7 +83,7 @@ int logger(void* udata) {
     while (!need_exit) {
         /* DEBUG */
         syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
-        sleep(2);
+        sleep(5);
         /*********/
 
         // Sleep between iterations
@@ -178,8 +182,17 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
 }
 
 
-void to_log_queue(GQueue* log_queue, char* rec) {
-    log_record* l_rec = make_lrec(rec);
+void to_log_queue(GQueue* log_queue, int msg_lvl, char* msg_fmt,...) {
+
+    va_list v_args;
+    va_start(v_args, msg_fmt);
+    char msg[LOG_REC_BUF_LEN];
+
+    snprintf(msg, LOG_REC_BUF_LEN, msg_fmt, v_args);
+    va_end(v_args);
+
+    log_record* l_rec = make_lrec(msg_lvl, msg);
+    va_end(v_args);
 
     if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
         g_queue_push_tail(log_queue, l_rec);
@@ -232,8 +245,12 @@ static FILE* open_log(char* log_fpath) {
 
 
 // Return ptr to struct for log message
-log_record* make_lrec(char* rec) {
+log_record* make_lrec(int msg_lvl, char* rec) {
+    // TODO: free mem allocated for r->rec
     log_record* r = g_new(log_record, 1);
-    r->rec = rec;
+    r->ts_epoch = time(NULL);
+    r->msg_lvl = msg_lvl;
+    r->rec = (char*) malloc(LOG_REC_BUF_LEN);
+    snprintf(r->rec, LOG_REC_BUF_LEN, rec);
     return r;
 }
