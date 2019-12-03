@@ -179,8 +179,6 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
 
 
 void to_log_queue(GQueue* log_queue, char* rec) {
-    // TODO: should be changed to more efficient way
-    // to prevent waiting
     log_record* l_rec = make_lrec(rec);
 
     if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
@@ -230,4 +228,12 @@ static FILE* open_log(char* log_fpath) {
     fflush(log_fp);
     /**/
     return log_fp;
+}
+
+
+// Return ptr to struct for log message
+log_record* make_lrec(char* rec) {
+    log_record* r = g_new(log_record, 1);
+    r->rec = rec;
+    return r;
 }

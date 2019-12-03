@@ -11,6 +11,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+// Log msg levels
+#define INF 0
+#define WRN 1
+#define ERR 2
+#define DEBUG 4
+#define FATAL 5
+#define PANIC 6
+
 typedef struct logger_params {
     GQueue* log_queue;
     char* log_fpath;

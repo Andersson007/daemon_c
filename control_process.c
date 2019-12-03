@@ -19,8 +19,6 @@ static void terminate_service_backends(GQueue* b_list);
 
 static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath);
 
-log_record* make_lrec(char* rec);
-
 
 // Control process body
 int control_process(void *udata) {
@@ -251,14 +249,6 @@ backend_node* make_backend(pid_t b_pid, unsigned b_type) {
     b->b_pid = b_pid;
     b->b_type = b_type;
     return b;
-}
-
-
-// Return ptr to struct for log message
-log_record* make_lrec(char* rec) {
-    log_record* r = g_new(log_record, 1);
-    r->rec = rec;
-    return r;
 }
 
 
