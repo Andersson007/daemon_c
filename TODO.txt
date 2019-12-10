@@ -3,5 +3,4 @@
 3. Use not only absolute path
 4. Check log priority of -l is higher than of cfg
 5. Pass Log ts format string through .cfg file
-6. Represent Log msg levels as strings
-7. Find another way to get nested field from struct
+6. Find another way to get nested field from struct

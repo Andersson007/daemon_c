@@ -16,6 +16,8 @@ static inline time_t get_log_ts_epoch(GList* item);
 
 static inline int get_log_msg_lvl(GList* item);
 
+static char* get_log_msg_lvl_pretty(GList* item);
+
 static void init_log_queue_mutex(void);
 
 static FILE* open_log(char* log_fpath);
@@ -175,8 +177,10 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
 
                 char* ts_pretty = get_now_ts_pretty(get_log_ts_epoch(l_rec));
 
-                fprintf(log_fp, "%s [%d] %s", ts_pretty,
-                        get_log_msg_lvl(l_rec), get_log_msg(l_rec));
+                //fprintf(log_fp, "%s [%d] %s", ts_pretty,
+                //        get_log_msg_lvl(l_rec), get_log_msg(l_rec));
+                fprintf(log_fp, "%s [%s] %s", ts_pretty,
+                        get_log_msg_lvl_pretty(l_rec), get_log_msg(l_rec));
 
                 // Clean up
                 g_free(l_rec->data);
@@ -276,4 +280,26 @@ static inline time_t get_log_ts_epoch(GList* item) {
 static inline int get_log_msg_lvl(GList* item) {
 
     return ((log_record*)item->data)->msg_lvl;
+}
+
+
+// Get msg_lvl in string representation
+static char* get_log_msg_lvl_pretty(GList* item) {
+
+    switch (((log_record*)item->data)->msg_lvl) {
+        case INF:
+            return "INFO";
+        case WRN:
+            return "WARNING";
+        case ERR:
+            return "ERROR";
+        case DEBUG:
+            return "DEBUG";
+        case FATAL:
+            return "FATAL";
+        case PANIC:
+            return "PANIC";
+        default:
+            return "INFO";
+    }
 }
