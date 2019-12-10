@@ -22,6 +22,7 @@ static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath);
 
 // Control process body
 int control_process(void *udata) {
+
     char msg[LOG_REC_BUF_LEN];  // Log msg buffer
 
     // Defaults
@@ -70,9 +71,11 @@ int control_process(void *udata) {
         config_destroy(&cfg);
         exit(EXIT_FAILURE);
     }
+
     /* DEBUG */
     syslog(LOG_INFO, "Control process: cfg file is '%s'", glob_args.cfg_fpath);
     /* ***** */
+
     setting = config_lookup(&cfg, "log_file_path");
     if (setting != NULL && !strcmp(glob_args.log_fpath, DEFAULT_LOG_PATH)) {
         glob_args.log_fpath = (char* ) config_setting_get_string(setting);
@@ -141,7 +144,9 @@ int control_process(void *udata) {
 
     // The control process loop
     int need_exit = 0;
+
     while (!need_exit) {
+
         /* DEBUG */
         syslog(LOG_INFO, "CP: in loop, pid %d, ppid %d", getpid(), getppid());
         sleep(5);
@@ -197,14 +202,16 @@ int control_process(void *udata) {
 
     // Close the signal file descriptor
     close(sfd);
+
     // Remove the sighal handlers
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
     // Write an exit code to the system log
     syslog(LOG_INFO, "Control process: stopped with status code %d.", exit_code);
+
     // Close the system log
     closelog();
 
-    //return exit_code;
     exit(exit_code);
 }
 
@@ -218,10 +225,12 @@ void terminate_service_backends(GQueue* b_list) {
         b_proc = g_queue_peek_tail_link(b_list);
 
         if (get_b_type(b_proc) == CONTROL_PROCESS || b_proc == NULL) {
+
             /* DEBUG */
             syslog(LOG_INFO, "CP: DONT kill %d, it is CP itself %d",
                    get_b_pid(b_proc), get_b_type(b_proc));
             /*********/
+
             break;
         }
 
@@ -239,6 +248,8 @@ void terminate_service_backends(GQueue* b_list) {
             syslog(LOG_INFO, "CP: cannot kill %d, rcode %d",
                    get_b_pid(b_proc), k_rc);
         }
+
+        // Clean up
         g_free(b_proc->data);
         g_queue_pop_tail(b_list);
     }
@@ -247,29 +258,37 @@ void terminate_service_backends(GQueue* b_list) {
 
 // Return ptr to struct backend process representation
 backend_node* make_backend(pid_t b_pid, unsigned b_type) {
+
     backend_node* b = g_new(backend_node, 1);
+
     b->b_pid = b_pid;
     b->b_type = b_type;
+
     return b;
 }
 
 
 // Return ptr to struct for logger params
 static logger_params* make_logger_params(GQueue* log_queue, char* log_fpath) {
+
     logger_params* p = g_new(logger_params, 1);
+
     p->log_queue = log_queue;
     p->log_fpath = log_fpath;
+
     return p;
 }
 
 
 // Get backend process pid from backend list item
 static inline pid_t get_b_pid(GList* item) {
+
     return ((backend_node*)item->data)->b_pid;
 }
 
 
 // Get backend process type from backend list item
 static inline int get_b_type(GList* item) {
+
     return ((backend_node*)item->data)->b_type;
 }

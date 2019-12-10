@@ -5,14 +5,18 @@
 #include "headers/timec.h"
 
 void msleep(unsigned long msec) {
+
     struct timespec ts;
+
     ts.tv_sec = msec / 1000;
     ts.tv_nsec = (msec % 1000) * 1000000;
+
     nanosleep(&ts, NULL);
 }
 
 
 char* get_now_ts_pretty(time_t ts_epoch) {
+
     struct tm* t_info = localtime(&ts_epoch);
     char* t_stamp;
     // TODO: pass format string through .cfg file

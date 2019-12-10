@@ -12,27 +12,18 @@ pthread_mutexattr_t attrmutex;
 
 static inline char* get_log_msg(GList* item);
 
+static inline time_t get_log_ts_epoch(GList* item);
+
+static inline int get_log_msg_lvl(GList* item);
+
 static void init_log_queue_mutex(void);
 
 static FILE* open_log(char* log_fpath);
 
-// Get msg field from log record struct
-static inline char* get_log_msg(GList* item) {
-    return ((log_record*)item->data)->msg;
-}
 
-// Get ts_epoch from log record struct
-static inline time_t get_log_ts_epoch(GList* item) {
-    return ((log_record*)item->data)->ts_epoch;
-}
-
-// Get msg_lvl fielsd from log_record struct
-static inline int get_log_msg_lvl(GList* item) {
-    return ((log_record*)item->data)->msg_lvl;
-}
-
-
+// Main logger's function
 int logger(void* udata) {
+
     // Get params from Control process
     logger_params* log_params = (logger_params*) udata;
 
@@ -88,7 +79,9 @@ int logger(void* udata) {
 
     // The control process loop
     int need_exit = 0;
+
     while (!need_exit) {
+
         /* DEBUG */
         syslog(LOG_INFO, "Logger process: in loop, pid %d, ppid %d", getpid(), getppid());
         sleep(5);
@@ -141,55 +134,63 @@ int logger(void* udata) {
     }
 
     // Clean up
-    fclose(log_fp);                 // Log file descriptor
-    free(log_params);               // Log params struct
-    //g_queue_free_full(log_queue, g_free);   // Log message queue
-    pthread_mutex_destroy(&lq_mtx); // Mutex for log queue
-    pthread_mutexattr_destroy(&attrmutex); // Mutex attr
+    fclose(log_fp);                         // Log file descriptor
+    free(log_params);                       // Log params struct
+    pthread_mutex_destroy(&lq_mtx);         // Mutex for log queue
+    pthread_mutexattr_destroy(&attrmutex);  // Mutex attr
 
     // Close the signal file descriptor
     close(sfd);
+
     // Remove the sighal handlers
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
     // Write an exit code to the system log
     syslog(LOG_INFO, "Logger process stopped with status code %d.", exit_code);
+
     // Close the system log
     closelog();
 
-    //return exit_code;
     exit(exit_code);
 }
 
 
 void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
+
     // When log_queue is not empty, write its elements to log_fp,
     // and pop them from log_queue
     if (!g_queue_is_empty(log_queue)) {
+
         /* Debug */
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
-        /*
-         * Use lock here
-         */
+        /* ***** */
+
         GList* l_rec = NULL;
 
         while(!g_queue_is_empty(log_queue)) {
+
             // Write log records until the log queue is not empty
             if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
-                // TODO: free mem allocated for r->rec by make_lrec()
-                //char* pretty_ts = get_now_ts_pretty(get_log_ts_epoch(l_rec));
-                char* pretty_ts = get_now_ts_pretty(time(NULL));
                 l_rec = g_queue_peek_head_link(log_queue);
+
+                char* pretty_ts = get_now_ts_pretty(get_log_ts_epoch(l_rec));
+
                 fprintf(log_fp, "%s [%d] %s", pretty_ts,
                         get_log_msg_lvl(l_rec), get_log_msg(l_rec));
-                //free(get_log_msg(l_rec));
+
+                // Clean up
                 g_free(l_rec->data);
                 free(pretty_ts);
                 g_queue_pop_head(log_queue);
+
+                // Unlock log queue
                 pthread_mutex_unlock(&lq_mtx);
             }
         }
-        /*******/
+
+        /* DEBUG */
         syslog(LOG_INFO, "length is %d", g_queue_get_length(log_queue));
+        /* ***** */
 
         // Flush data to disk
         fflush(log_fp);
@@ -199,6 +200,7 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
 
 // Initialize mutex for log queue
 static void init_log_queue_mutex(void) {
+
     unsigned rc = EXIT_SUCCESS;
 
     rc = pthread_mutexattr_init(&attrmutex);
@@ -226,7 +228,9 @@ static void init_log_queue_mutex(void) {
 
 // Open log file in "a+" mode
 static FILE* open_log(char* log_fpath) {
+
     FILE* log_fp = fopen(log_fpath, "a+");
+
     if (!log_fp) {
         syslog(LOG_ERR, "could not open the log file %s", log_fpath);
         exit(1);
@@ -235,16 +239,41 @@ static FILE* open_log(char* log_fpath) {
     /* DEBUG */
     fprintf(log_fp, "Logger 'hello'\n");
     fflush(log_fp);
-    /**/
+    /* ***** */
+
     return log_fp;
 }
 
 
 // Return ptr to struct for log message
 log_record* make_lrec(int msg_lvl, char* msg) {
+
     log_record* r = g_new(log_record, 1);
+
     r->ts_epoch = time(NULL);
     r->msg_lvl = msg_lvl;
     snprintf(r->msg, LOG_REC_BUF_LEN, msg);
+
     return r;
+}
+
+
+// Get msg field from log record struct
+static inline char* get_log_msg(GList* item) {
+
+    return ((log_record*)item->data)->msg;
+}
+
+
+// Get ts_epoch from log record struct
+static inline time_t get_log_ts_epoch(GList* item) {
+
+    return ((log_record*)item->data)->ts_epoch;
+}
+
+
+// Get msg_lvl fielsd from log_record struct
+static inline int get_log_msg_lvl(GList* item) {
+
+    return ((log_record*)item->data)->msg_lvl;
 }
