@@ -173,14 +173,14 @@ void handle_log_queue(GQueue* log_queue, FILE* log_fp) {
             if (pthread_mutex_lock(&lq_mtx) == SUCCEED) {
                 l_rec = g_queue_peek_head_link(log_queue);
 
-                char* pretty_ts = get_now_ts_pretty(get_log_ts_epoch(l_rec));
+                char* ts_pretty = get_now_ts_pretty(get_log_ts_epoch(l_rec));
 
-                fprintf(log_fp, "%s [%d] %s", pretty_ts,
+                fprintf(log_fp, "%s [%d] %s", ts_pretty,
                         get_log_msg_lvl(l_rec), get_log_msg(l_rec));
 
                 // Clean up
                 g_free(l_rec->data);
-                free(pretty_ts);
+                free(ts_pretty);
                 g_queue_pop_head(log_queue);
 
                 // Unlock log queue
