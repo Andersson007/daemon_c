@@ -1,6 +1,17 @@
-1. Add usage some logging lib in Logger proc
-2. Implement log level for debug (and others) by .cfg file
-3. Use not only absolute path
-4. Check log priority of -l is higher than of cfg
-5. Pass Log ts format string through .cfg file
-6. Find another way to get nested field from struct
+General:
+- Find another way to get nested field from struct
+
+
+Logging related:
+- Implement log level for debug (and others) by .cfg file
+- Check log priority of -l is higher than of cfg
+- Pass Log ts format string through .cfg file
+- Use not only absolute path while passing paths by CLI args
+
+
+Config file related
+- Use not only absolute path while passing paths by CLI args
+
+
+Wont implement:
+- Add usage some logging lib in Logger proc (decided to do it by my own)
